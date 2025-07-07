@@ -4,7 +4,7 @@
 
 This project implements a robust backend system designed as a reliable webhook delivery service. It ingests incoming webhooks via an API endpoint, queues them for asynchronous processing, and attempts delivery to subscribed target URLs. The service handles delivery failures with an exponential backoff retry mechanism and provides visibility into the delivery status through logging and dedicated API endpoints. A minimal Streamlit UI is included for basic interaction.
 
-This service was built as a solution to the Backend Assignment (April 2025).
+This service was built as a solution to the Backend Assignment.
 
 ## Features
 
@@ -74,8 +74,8 @@ Two main tables are used:
 
 1.  **Clone the Repository:**
     ```bash
-    git clone https://github.com/Gaurav23V/webhook-service
-    cd webhook-svc
+    git clone https://github.com/remsins/webhook.git
+    cd webhook
     ```
 
 2.  **Configure Environment:**
