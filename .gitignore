@@ -1,0 +1,12 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.env
+venv/
+
+# IDE / Editor
+.vscode/
+.idea/
+
+# Docker
+*.log

@@ -1,0 +1,87 @@
+services:
+  db:
+    image: postgres:15-alpine 
+    container_name: webhook_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: webhook_svc
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d webhook_svc"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:6-alpine
+    container_name: webhook_red
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  api:
+    build: . 
+    container_name: webhook_api
+    command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload 
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src:/app/src
+    environment:
+      # Force correct URLs for Docker
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/webhook_svc
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    build: .
+    container_name: webhook_worker
+    command: rq worker deliveries
+    volumes:
+      - ./src:/app/src
+    environment:
+      # Force correct URLs for Docker
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/webhook_svc
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+  
+  ui:
+    build: .
+    container_name: webhook_ui
+    command: streamlit run ui/app.py --server.port=8501 --server.address=0.0.0.0
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./ui:/app/ui
+      - ./src:/app/src
+    environment:
+      - API_BASE_URL=http://api:8000
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  postgres_data: {}
+  redis_data: {}
